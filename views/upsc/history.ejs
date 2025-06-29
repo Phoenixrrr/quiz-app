@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Static Quizzes – History</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 30px; }
+    .topic-list { display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin: auto; }
+    .topic-item { display: flex; justify-content: space-between; align-items: center; background: #f2f2f2; padding: 12px 20px; border-radius: 6px; }
+    .topic-item:hover { background: #e0e0e0; }
+    .btn { padding: 6px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <h1>History</h1>
+  <div class="topic-list">
+
+    <% const topics = [
+      "Stone Age",
+      "Indus Valley Civilization",
+      "Vedic Age",
+      "Buddhism",
+      "Jain Religion",
+      "Shaiva, Bhagavata Religion",
+      "Sixth century B.C.E - Political Condition",
+      "Greek Invasion",
+      "Maurya Empire",
+      "Post-Mauryan Period",
+      "Gupta and Post-Gupta Period",
+      "Architecture in Ancient India",
+      "South India (Chola, Chalukya, Pallava and Sangam Period)",
+      "Ancient Literature and Litterateur",
+      "Pre-Medieval Period",
+      "Muslim Invasion of India",
+      "Delhi Sultanate: Slave Dynasty",
+      "Khalji Dynasty",
+      "Tughluq Dynasty",
+      "Lodi Dynasty",
+      "Vijayanagara Empire",
+      "Delhi Sultanate: Administration",
+      "Delhi Sultanate: Art and Architecture",
+      "Delhi Sultanate: Literature",
+      "Delhi Sultanate: Miscellaneous",
+      "Provincial Dynasty of North India and Deccan Province",
+      "Bhakti and Sufi Movement",
+      "Mughal Dynasty: Babur",
+      "Humayun and Sher Shah",
+      "Akbar",
+      "Jahangir",
+      "Shah Jahan",
+      "Aurangzeb",
+      "Mughal Administration",
+      "Music and Paintings of Mughal Period",
+      "Mughal Literature",
+      "Mughal Period: Miscellaneous",
+      "Sikh Sect",
+      "Maratha State and Confederacy",
+      "Disintegration of the Mughal Empire",
+      "Advent of European Companies",
+      "East India Company and Nawab of Bengal",
+      "Regional States: Punjab and Mysore",
+      "Governor/Governor General/ Viceroy",
+      "Economic Impact of British Rule on India",
+      "Revolt of 1857",
+      "Other Civil Uprisings",
+      "Development of Education in Modern India",
+      "Development of Press in Modern India",
+      "Social Religious Movement",
+      "Political Organisation Established before Congress",
+      "Indian National Congress",
+      "Moderates and Extremists in Congress",
+      "Revolutionary Movement in India",
+      "Revolutionary Activities Outside India",
+      "Partition of Bengal and Swadeshi Movement",
+      "Congress: Banaras, Calcutta, and Surat Session",
+      "Formation of Muslim League (1906)",
+      "Morley-Minto Reforms",
+      "Delhi Durbar and Change of Capital",
+      "Lucknow Session of Congress (The Lucknow Pact)",
+      "Home Rule League Movement",
+      "Gandhi and His Early Movement",
+      "Peasant Movement and Kisan Sabha",
+      "Trade Union and Communist Party",
+      "Rowlatt Act and Jallianwala Bagh Massacre (1919)",
+      "Khilafat Movement",
+      "Non-Cooperation Movement",
+      "Formation of Swaraj Party (1923)",
+      "Simon Commission (1927)",
+      "Lahore Session of Congress, Proposal of Complete Independence (1929)",
+      "Civil Disobedience Movement",
+      "Gandhi-Irwin Pact",
+      "Karachi Session of Congress (1931)",
+      "Round Table Conference",
+      "Communal Award and Poona Pact (1932)",
+      "Congress Socialist Party (1934)",
+      "Provincial Election and Formation of Cabinet (1937)",
+      "Tripuri Crisis of Congress (1939)",
+      "Indian Princely States",
+      "Second World War",
+      "Demand for Pakistan",
+      "Individual Satyagrah (1940)",
+      "Cripps Mission (1942)",
+      "Quit India Movement",
+      "Subhash Chandra Bose and Azad Hind Fauj",
+      "Cabinet Mission Plan (1946)",
+      "Constituent Assembly (1946)",
+      "Formation of Interim Government (1946)",
+      "Partition of India and Independence",
+      "Constitutional Development of India",
+      "Modern History: Miscellaneous",
+      "Magazines, Books and Their Authors",
+      "Art and Culture",
+      "Award"
+    ]; %>
+
+    <% topics.forEach(topic => { 
+      const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const quizMap = {
+        // Add custom slugs if needed
+      };
+      const quizFile = quizMap[slug] || slug;
+    %>
+      <div class="topic-item">
+        <span><%= topic %></span>
+        <a href="/upsc/<%= quizFile %>"><button class="btn">Take Quiz</button></a>
+      </div>
+    <% }); %>
+
+  </div>
+</body>
+</html>

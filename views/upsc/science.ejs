@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Static Quizzes – UPSC Topics</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 30px; }
+    .topic-list { display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin: auto; }
+    .topic-item { display: flex; justify-content: space-between; align-items: center; background: #f2f2f2; padding: 12px 20px; border-radius: 6px; }
+    .topic-item:hover { background: #e0e0e0; }
+    .btn { padding: 6px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <h1>Geography</h1>
+  <div class="topic-list">
+
+    <% const topics = [
+      "Indian Geography - General Introduction - Area",
+      "Latitudinal Expansion",
+      "India and the Tropic of Cancer",
+      "Standard Time",
+      "Extreme Points",
+      "Bordering Countries",
+      "Physical Division - Natural Region of India",
+      "Northern Mountainous Region",
+      "Mountain Ranges and Hills of South and Central India",
+      "Mountain Peaks",
+      "Valleys",
+      "Passes",
+      "Snow Lines and Glaciers",
+      "Plateaus",
+      "Coastal Region",
+      "Indian Coastline",
+      "Eastern and Western Coast",
+      "Islands - Bay of Bengal",
+      "Islands - Arabian Sea",
+      "States of India",
+      "Union Territories",
+      "Species/Tribes",
+      "Languages",
+      "Drainage System - Ganga",
+      "Drainage System - Brahmaputra",
+      "Other Rivers",
+      "Cities Located on River Banks",
+      "Waterfalls and Lakes",
+      "Climate - Monsoon",
+      "Climate - Rainfall",
+      "Climate - Winter Rainfall",
+      "Natural Disasters",
+      "Soils",
+      "Natural Vegetation",
+      "Irrigation and Canals",
+      "Multi-purpose River Valley Project",
+      "Agriculture",
+      "Green Revolution",
+      "Food Crops",
+      "Cash Crops",
+      "Oilseeds",
+      "Pulses",
+      "Silk",
+      "Plantation Crops",
+      "Agriculture: Miscellaneous",
+      "Jhuming Agriculture",
+      "Animal Husbandry",
+      "Mineral Resources",
+      "Miscellaneous Minerals",
+      "Electrical Energy",
+      "Industry",
+      "Research Centres",
+      "Transport",
+      "Tourism",
+      "Miscellaneous",
+      "World Geography - Universe",
+      "The Solar System",
+      "The Sun",
+      "The Mercury",
+      "The Venus",
+      "The Earth",
+      "The Mars",
+      "The Jupiter",
+      "The Saturn",
+      "The Uranus, Neptune and Pluto",
+      "The Moon",
+      "Asteroids",
+      "Comets and Meteors",
+      "Earth - Latitude",
+      "Longitude",
+      "Equator",
+      "Tropic of Cancer",
+      "Tropic of Capricorn",
+      "Day and Night",
+      "Origin of the Earth",
+      "Geological History",
+      "Rocks",
+      "Volcano",
+      "Earthquake",
+      "The Continents",
+      "World Mountain Ranges",
+      "The Plateaus",
+      "Valleys",
+      "Arid Region/Deserts",
+      "Grasslands",
+      "Countries and Borders",
+      "Dependent Territories",
+      "Landlocked Countries",
+      "Old Country Names",
+      "International Border Lines",
+      "Capital Cities",
+      "World Towns",
+      "Geographical Sobriquets",
+      "Hydrosphere",
+      "Important Seas",
+      "Ocean Currents",
+      "Salinity of Oceans",
+      "High/Low Tides",
+      "Oceanic Trenches",
+      "World Rivers",
+      "Towns on River Banks",
+      "Landforms by Rivers",
+      "The Island",
+      "Lakes and Waterfalls",
+      "Straits",
+      "Canals",
+      "Dams of the World",
+      "Coral Reefs",
+      "Atmosphere",
+      "Insolation",
+      "Cyclone",
+      "Humidity",
+      "Atmospheric Pressure",
+      "Clouds",
+      "Winds",
+      "Local Winds",
+      "World Forests",
+      "World Climate",
+      "World Soils",
+      "Major Tribes",
+      "World Languages",
+      "Economic Geography - Agriculture and Livestock",
+      "Minerals",
+      "Industries",
+      "World Transport",
+      "Ports and Harbours",
+      "World Mapping",
+      "World Geography Miscellaneous"
+    ]; %>
+
+    <% topics.forEach(topic => {
+      const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      // Mapping for known quiz files
+      const quizMap = {
+        "indian-geography-general-introduction-area": "area"
+        // Add more custom mappings here as needed
+      };
+
+      const quizFile = quizMap[slug] || slug;
+    %>
+      <div class="topic-item">
+        <span><%= topic %></span>
+        <a href="/upsc/<%= quizFile %>"><button class="btn">Take Quiz</button></a>
+      </div>
+    <% }) %>
+
+  </div>
+</body>
+</html>

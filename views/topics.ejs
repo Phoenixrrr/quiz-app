@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= subject.charAt(0).toUpperCase() + subject.slice(1) %> Topics – UPSC</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 40px;
+      font-size: 32px;
+      text-transform: capitalize;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+    }
+    .topic-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .topic-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f9f9f9;
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.2s;
+    }
+    .topic-item:hover {
+      background-color: #f0f0f0;
+    }
+    .topic-title {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .btn {
+      padding: 8px 14px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .btn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <h1><%= subject.charAt(0).toUpperCase() + subject.slice(1) %> – Topics</h1>
+
+  <div class="topic-list">
+    <% topics.forEach(topic => {
+         const slug = topic.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    %>
+      <div class="topic-item">
+        <span class="topic-title"><%= topic.title %></span>
+        <a href="/upsc/<%= subject %>/<%= slug %>" class="btn">Take Quiz</a>
+      </div>
+    <% }) %>
+  </div>
+
+</body>
+</html>

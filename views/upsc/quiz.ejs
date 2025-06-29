@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz</title>
+  <style>
+    /* ... your existing CSS ... */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f7f9fc;
+      color: #222;
+    }
+    h1 { text-align: center; margin-bottom: 30px; color: #2c3e50; }
+    input[type="file"], button {
+      font-size: 1rem;
+      padding: 10px 20px;
+      margin: 10px 10px 20px 0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button {
+      background-color: #2980b9;
+      color: white;
+    }
+    button:hover { background-color: #1f618d; }
+    .question-box {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+    label:hover { background: #e1ecf4; }
+    input[type="radio"] { margin-right: 10px; }
+    .hidden { display: none; }
+    .correct-answer { color: green; font-weight: bold; }
+    .wrong-answer { color: red; font-weight: bold; }
+    .review-section {
+      background: white;
+      padding: 25px;
+      margin-top: 30px;
+      border-radius: 8px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    }
+    .review-section h2 {
+      text-decoration: underline;
+      margin-bottom: 20px;
+    }
+    .review-question { margin-bottom: 25px; }
+    #analytics {
+      background: white;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    #downloadPdfBtn { background-color: #27ae60; }
+    #downloadPdfBtn:hover { background-color: #1e8449; }
+    #chart-container {
+      width: 300px;
+      margin: 20px auto 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload & Take Quiz</h1>
+
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="quizJson" accept=".json" required />
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="quizContainer"></div>
+  <button id="submitQuizBtn" style="display:none;">Submit Quiz</button>
+  <button id="downloadPdfBtn" style="display:none;">Download Analysis as PDF</button>
+
+  <div id="analytics" style="display:none;"></div>
+  <div id="chart-container" style="display:none;">
+    <canvas id="result-chart"></canvas>
+  </div>
+  <div id="reviewContainer" class="review-section" style="display:none;"></div>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const quizContainer = document.getElementById('quizContainer');
+    const submitBtn = document.getElementById('submitQuizBtn');
+    const downloadBtn = document.getElementById('downloadPdfBtn');
+    const analytics = document.getElementById('analytics');
+    const reviewContainer = document.getElementById('reviewContainer');
+    const chartContainer = document.getElementById('chart-container');
+
+    let questions = [];
+    let quizSubmitted = false;
+    let userAnswers = [];
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      resetView();
+      const formData = new FormData(form);
+      try {
+        const res = await fetch('/upload-json', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+
+        questions = normalizeQuestions(data);
+
+        if (!questions.length) {
+          quizContainer.innerText = 'No questions found.';
+          return;
+        }
+        renderQuiz(questions);
+        submitBtn.style.display = 'inline-block';
+      } catch (err) {
+        quizContainer.innerText = 'Error uploading JSON.';
+        console.error(err);
+      }
+    });
+
+    // Normalize various JSON formats to flat array of questions
+    function normalizeQuestions(data) {
+      // If data is array
+      if (Array.isArray(data)) {
+        // Check if nested array (array inside array)
+        if (data.length && Array.isArray(data[0])) {
+          // Flatten one level
+          return data.flat();
+        }
+        return data;
+      }
+
+      // If data.quiz or data.questions exist and are arrays
+      if (data.quiz && Array.isArray(data.quiz)) {
+        return data.quiz;
+      }
+      if (data.questions && Array.isArray(data.questions)) {
+        return data.questions;
+      }
+
+      // Handle nested quiz inside another object, e.g. data.data.quiz
+      if (data.data && (Array.isArray(data.data.quiz) || Array.isArray(data.data.questions))) {
+        return data.data.quiz || data.data.questions;
+      }
+
+      // Last attempt: if data is object with unknown keys, try to find first array property with question-like structure
+      for (const key in data) {
+        if (Array.isArray(data[key]) && data[key].length > 0) {
+          // Basic heuristic: check if first element has 'question' and 'options'
+          const first = data[key][0];
+          if (first && typeof first === 'object' && 'question' in first && 'options' in first) {
+            return data[key];
+          }
+        }
+      }
+
+      // If none matched, return empty array
+      return [];
+    }
+
+    function resetView() {
+      quizContainer.innerHTML = '';
+      analytics.style.display = 'none';
+      reviewContainer.style.display = 'none';
+      chartContainer.style.display = 'none';
+      submitBtn.style.display = 'none';
+      downloadBtn.style.display = 'none';
+      quizSubmitted = false;
+      userAnswers = [];
+    }
+
+    function renderQuiz(questions) {
+      questions.forEach((q, idx) => {
+        const div = document.createElement('div');
+        div.className = 'question-box';
+        const opts = q.options.map((opt, j) => {
+          const letter = String.fromCharCode(97 + j);
+          return `<label><input type="radio" name="q${idx}" value="${j}"/> ${letter}) ${opt}</label>`;
+        }).join('');
+        div.innerHTML = `<p><strong>${idx+1}. ${q.question}</strong></p>${opts}`;
+        quizContainer.appendChild(div);
+      });
+    }
+
+    submitBtn.addEventListener('click', () => {
+      if (quizSubmitted) return;
+      quizSubmitted = true;
+
+      questions.forEach((_, i) => {
+        const sel = document.querySelector(`input[name=q${i}]:checked`);
+        userAnswers[i] = sel ? Number(sel.value) : null;
+      });
+      evaluate(userAnswers);
+    });
+
+    function evaluate(userAnswers) {
+      document.querySelectorAll('input[type=radio]').forEach(el => el.disabled = true);
+      let c = 0, w = 0, u = 0;
+
+      questions.forEach((q, i) => {
+        const a = userAnswers[i];
+        if (a === null) u++;
+        else if (a === q.answer) c++;
+        else w++;
+      });
+
+      showAnalytics(c, w, u);
+      showReview(userAnswers);
+      hideQuestions();
+      downloadBtn.style.display = 'inline-block';
+    }
+
+    function hideQuestions() {
+      document.querySelectorAll('.question-box').forEach(div => div.classList.add('hidden'));
+    }
+
+    function showAnalytics(c, w, u) {
+      analytics.style.display = 'block';
+      analytics.innerHTML = `
+        <h3>Quiz Completed!</h3>
+        <p>Total: ${questions.length}, Correct: ${c}, Wrong: ${w}, Unanswered: ${u}</p>`;
+      chartContainer.style.display = 'block';
+      renderChart(c, w, u);
+    }
+
+    function renderChart(c, w, u) {
+      const ctx = document.getElementById('result-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Correct', 'Wrong', 'Unanswered'],
+          datasets: [{ data: [c, w, u], backgroundColor: ['#27ae60','#e74c3c','#95a5a6'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function showReview(userAnswers) {
+      reviewContainer.style.display = 'block';
+      reviewContainer.innerHTML = '<h2>Solutions & Explanations</h2>';
+      questions.forEach((q, i) => {
+        const a = userAnswers[i];
+        const letter = idx => String.fromCharCode(97 + idx);
+        reviewContainer.innerHTML += `
+          <div class="review-question">
+            <div><strong>${i+1}. ${q.question}</strong></div>
+            ${a !== null ? `<div>Your Answer: <span class="${a===q.answer ? 'correct-answer':'wrong-answer'}">
+              ${letter(a)}) ${q.options[a]}</span></div>` : `<div><em>No answer given.</em></div>`}
+            <div>Correct Answer: <span class="correct-answer">
+              ${letter(q.answer)}) ${q.options[q.answer]}</span></div>
+            ${q.explanation ? `<div>Explanation: ${q.explanation}</div>` : ''}
+          </div>`;
+      });
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      let content = 'Quiz Solutions & Explanations\n\n';
+      questions.forEach((q, i) => {
+        const a = userAnswers[i];
+        const letter = idx => String.fromCharCode(97 + idx);
+        content += `${i+1}. ${q.question}\nYour answer: ${a !== null ? letter(a) + ') ' + q.options[a] : 'No answer'}\n`;
+        content += `Correct answer: ${letter(q.answer)}) ${q.options[q.answer]}\n`;
+        if (q.explanation) content += `Explanation: ${q.explanation}\n`;
+        content += '\n';
+      });
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'quiz_solutions.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Static Quizzes – UPSC Topics</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 30px; }
+    .topic-list { display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin: auto; }
+    .topic-item { display: flex; justify-content: space-between; align-items: center; background: #f2f2f2; padding: 12px 20px; border-radius: 6px; }
+    .topic-item:hover { background: #e0e0e0; }
+    .btn { padding: 6px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <h1>Geography</h1>
+  <div class="topic-list">
+
+    <% const topics = [
+  "The Constitutional Development of India",
+  "Constituent Assembly and Making of the Constitution",
+  "Articles of the Constitution",
+  "The Preamble",
+  "The Governance System",
+  "National Symbols",
+  "State and the Union Territories",
+  "The Citizenship",
+  "Fundamental Rights",
+  "Directive Principles of State Policy",
+  "Fundamental Duties",
+  "The President",
+  "The Vice-President",
+  "The Council of Ministers",
+  "The Attorney General and the C.A.G.",
+  "Order of Precedence",
+  "The Parliament (1)",
+  "The Parliament (2)",
+  "The Parliament (3)",
+  "The Parliament (4)",
+  "The Supreme Court",
+  "The Governor",
+  "The State Legislature",
+  "The High Court",
+  "The Centre-State Relations",
+  "Emergency Provisions",
+  "The Finance Commission",
+  "The Planning Commission/Niti Aayog",
+  "Lokpal and Important Commissions",
+  "Temporary Special Provisions",
+  "Election Commission",
+  "Political Parties",
+  "Constitutional Amendments",
+  "Official Language",
+  "Panchayati Raj and Community Development",
+  "Special Provision for Certain Classes",
+  "Miscellaneous"
+]
+; %>
+
+    <% topics.forEach(topic => {
+      const slug = topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      // Mapping for known quiz files
+      const quizMap = {
+        "indian-geography-general-introduction-area": "area"
+        // Add more custom mappings here as needed
+      };
+
+      const quizFile = quizMap[slug] || slug;
+    %>
+      <div class="topic-item">
+        <span><%= topic %></span>
+        <a href="/upsc/<%= quizFile %>"><button class="btn">Take Quiz</button></a>
+      </div>
+    <% }) %>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+[
+  {
+    "question": "Which of the following statements are true about India? Use the code given below to select the correct answer:\n1. India is the fifth largest country of the world\n2. It occupies about 2.4 percent of the total area of the lithosphere.\n3. Whole of India lies in the tropic zone.\n4. 82°30' east longitude is used to determine Indian Standard Time\nCode:",
+    "options": {
+      "a": "1 and 2",
+      "b": "2 and 3",
+      "c": "1 and 3",
+      "d": "2 and 4"
+    },
+    "answer": "d",
+    "explanation": "Statement 1 is incorrect: India is the seventh largest country in the world by area, not the fifth, as stated in the text. Statement 2 is correct: India's total area of approximately 3,287,263 sq. km constitutes about 2.4% of the world's land surface (lithosphere). Statement 3 is incorrect: While the southern part of India lies in the tropic zone (between 8°4'N and 23°30'N), the northern part lies in the subtropical or warm temperate zone (up to 37°6'N), so the whole of India does not lie in the tropic zone. Statement 4 is correct: The 82°30'E longitude is used to determine Indian Standard Time (IST). Hence, only statements 2 and 4 are correct, making option (d) the correct answer."
+  },
+  {
+    "question": "Where does India rank in the area among the countries of the world?",
+    "options": {
+      "a": "Fifth",
+      "b": "Sixth",
+      "c": "Seventh",
+      "d": "Eighth"
+    },
+    "answer": "c",
+    "explanation": "India is the seventh largest country in the world by area, with a total area of approximately 3,287,263 sq. km, following Russia, Canada, USA, China, Brazil, and Australia, as stated in the text. Therefore, option (c) is correct."
+  },
+  {
+    "question": "India is in size -",
+    "options": {
+      "a": "Fifth largest country of the world",
+      "b": "Sixth largest country of the world",
+      "c": "Seventh largest country of the world",
+      "d": "None of the above"
+    },
+    "answer": "c",
+    "explanation": "As per the text, India is the seventh largest country in the world in terms of area, with a total area of approximately 3,287,263 sq. km. Hence, option (c) is the correct answer."
+  },
+  {
+    "question": "Which of the following pair is not correctly matched?",
+    "options": {
+      "a": "Total area of India - 3.28 million sq. km.",
+      "b": "Latitudinal extent - 8°4' N - 37°6' N",
+      "c": "Longitudinal extent - 68°7' E - 97°25' E",
+      "d": "Number of states in India - 26"
+    },
+    "answer": "d",
+    "explanation": "Option (a) is correct: India's total area is approximately 3.28 million sq. km (3,287,263 sq. km). Option (b) is correct: India's latitudinal extent is from 8°4'N to 37°6'N. Option (c) is correct: India's longitudinal extent is from 68°7'E to 97°25'E. Option (d) is incorrect: India has 28 states, not 26, as per the text. Therefore, option (d) is not correctly matched."
+  },
+  {
+    "question": "Area of India is 2.4% of the total area of the world but its–",
+    "options": {
+      "a": "population is 16% of world population",
+      "b": "population is 17% of world population",
+      "c": "population is 18% of world population",
+      "d": "population is 28% of world population"
+    },
+    "answer": "b",
+    "explanation": "As per the 2011 Census, India's population constitutes approximately 17.5% of the world's population, which is closest to 17% among the given options. The text also confirms that India's area is about 2.4% of the world's land surface. Therefore, option (b) is correct."
+  },
+  {
+    "question": "How many villages are (approximately) there in India –",
+    "options": {
+      "a": "5 lakh",
+      "b": "6 lakh 30 thousand",
+      "c": "8 lakh",
+      "d": "None of these"
+    },
+    "answer": "d",
+    "explanation": "As per the 2011 Census, the number of villages in India is approximately 6,40,932, as stated in the text. Among the given options, 6 lakh 30 thousand (6,30,000) is close but not exact, and the correct number (6,40,932) is not precisely represented by any option. Therefore, option (d) 'None of these' is the correct answer, as none of the provided options accurately reflect the number of villages."
+  },
+  {
+    "question": "Which of the following statements about India is incorrect?",
+    "options": {
+      "a": "India is the 7th largest country in the world",
+      "b": "India is the second populous country of the world",
+      "c": "It's land boundary extends for around 15,200 km",
+      "d": "The earliest sunrise is seen in its Mizoram State"
+    },
+    "answer": "d",
+    "explanation": "Option (a) is correct: India is the seventh largest country in the world by area. Option (b) is correct: India is the second most populous country in the world, as implied by its 17.5% share of the global population in 2011. Option (c) is correct: India's land boundary is approximately 15,200 km, as commonly accepted in geographical data (though not explicitly stated in the provided text, it is not contradicted). Option (d) is incorrect: The earliest sunrise in India is observed in Arunachal Pradesh, not Mizoram, due to Arunachal Pradesh being the easternmost state. Hence, option (d) is the incorrect statement."
+  }
+]

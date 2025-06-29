@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= title %> - Quiz</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f7f9fc;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2c3e50;
+      text-transform: capitalize;
+    }
+
+    form {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 3px 15px rgb(0 0 0 / 0.1);
+    }
+
+    .question-block {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .question-block p {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 5px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    label:hover {
+      background: #e1ecf4;
+    }
+
+    input[type="radio"] {
+      margin-right: 10px;
+    }
+
+    button {
+      background-color: #2980b9;
+      color: white;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+      display: block;
+      margin: 0 auto;
+    }
+
+    button:hover {
+      background-color: #1f618d;
+    }
+
+    .result {
+      background: white;
+      padding: 25px;
+      margin-top: 30px;
+      border-radius: 8px;
+      box-shadow: 0 3px 15px rgb(0 0 0 / 0.1);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .correct {
+      color: green;
+      font-weight: 600;
+    }
+
+    .wrong {
+      color: red;
+      font-weight: 600;
+    }
+
+    .explanation {
+      font-style: italic;
+      margin-top: 8px;
+      color: #555;
+      background-color: #f3f6f9;
+      padding: 10px;
+      border-radius: 5px;
+      border-left: 4px solid #2980b9;
+    }
+
+    #download-btn {
+      margin-top: 20px;
+      background-color: #27ae60;
+    }
+
+    #download-btn:hover {
+      background-color: #1e8449;
+    }
+
+    #chart-container {
+      width: 300px;
+      margin: 20px auto 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1><%= title %></h1>
+
+  <form id="quiz-form">
+    <% quiz.forEach((q, index) => { %>
+      <div class="question-block">
+        <p><%= index + 1 %>. <%= q.question %></p>
+        <% Object.entries(q.options).forEach(([key, val]) => { %>
+          <label>
+            <input type="radio" name="q<%= index %>" value="<%= key %>" />
+            <%= val %>
+          </label>
+        <% }) %>
+      </div>
+    <% }) %>
+    <button type="submit">Submit Quiz</button>
+  </form>
+
+  <div id="chart-container" style="display:none;">
+    <canvas id="result-chart"></canvas>
+  </div>
+
+  <div class="result" id="result" style="display:none;"></div>
+
+  <button id="download-btn" style="display:none;">Download Analysis as PDF</button>
+
+  <!-- jsPDF for PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Chart.js for pie chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    const title = "<%= title %>";
+    const form = document.getElementById('quiz-form');
+    const resultDiv = document.getElementById('result');
+    const downloadBtn = document.getElementById('download-btn');
+    const chartContainer = document.getElementById('chart-container');
+    const quiz = <%- JSON.stringify(quiz) %>;
+
+    let userAnswers = [];
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      let correct = 0, wrong = 0, unanswered = 0;
+      let totalScore = 0;
+      userAnswers = [];
+
+      let detailedHTML = '';
+
+      quiz.forEach((q, idx) => {
+        const userAnswer = form[`q${idx}`].value;
+        userAnswers.push(userAnswer || null);
+
+        const correctAnswer = q.answer;
+        detailedHTML += `<div class="question-block"><strong>Q${idx + 1}: ${q.question}</strong><br>`;
+        detailedHTML += `Your Answer: ${userAnswer ? q.options[userAnswer] : '<em>Unanswered</em>'}<br>`;
+        detailedHTML += `Correct Answer: <strong>${q.options[correctAnswer]}</strong><br>`;
+
+        if (!userAnswer) {
+          unanswered++;
+          detailedHTML += `<span class="wrong">Status: Unanswered (0 marks)</span>`;
+        } else if (userAnswer === correctAnswer) {
+          correct++;
+          totalScore += 2;
+          detailedHTML += `<span class="correct">Status: Correct (+2 marks)</span>`;
+        } else {
+          wrong++;
+          totalScore -= 0.66;
+          detailedHTML += `<span class="wrong">Status: Wrong (-0.66 marks)</span>`;
+        }
+
+        detailedHTML += `<div class="explanation">Explanation: ${q.explanation}</div></div><hr>`;
+      });
+
+      totalScore = Math.max(0, totalScore);
+
+      let fullResultHTML = `<h2>Quiz Result: ${title}</h2>`;
+      fullResultHTML += `<p><strong>Summary:</strong> Correct: ${correct} | Wrong: ${wrong} | Unanswered: ${unanswered}</p>`;
+      fullResultHTML += `<p><strong>Total Score:</strong> ${totalScore.toFixed(2)} / ${quiz.length * 2}</p>`;
+      fullResultHTML += detailedHTML;
+
+      form.style.display = 'none';
+      resultDiv.innerHTML = fullResultHTML;
+      resultDiv.style.display = 'block';
+      downloadBtn.style.display = 'inline-block';
+      chartContainer.style.display = 'block';
+
+      renderChart(correct, wrong, unanswered);
+    });
+
+    let chartInstance;
+
+    function renderChart(correct, wrong, unanswered) {
+      const ctx = document.getElementById('result-chart').getContext('2d');
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Correct', 'Wrong', 'Unanswered'],
+          datasets: [{
+            data: [correct, wrong, unanswered],
+            backgroundColor: ['#27ae60', '#e74c3c', '#95a5a6'],
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const margin = 40;
+      const maxWidth = 510;
+      let y = margin;
+
+      doc.setFontSize(16);
+      doc.text(`Quiz Analysis: ${title}`, margin, y);
+      y += 30;
+
+      doc.setFontSize(12);
+
+      quiz.forEach((q, idx) => {
+        if (y > 720) { doc.addPage(); y = margin; }
+
+        const ua = userAnswers[idx];
+        const uaText = ua ? q.options[ua] : 'Unanswered';
+        const status = !ua ? 'Unanswered (0 marks)' : (ua === q.answer ? 'Correct (+2 marks)' : 'Wrong (-0.66 marks)');
+
+        doc.setFontSize(12);
+        const questionLines = doc.splitTextToSize(`Q${idx + 1}: ${q.question}`, maxWidth);
+        doc.text(questionLines, margin, y);
+        y += questionLines.length * 14 + 4;
+
+        doc.text(`Your Answer: ${uaText}`, margin + 10, y); y += 16;
+        doc.text(`Correct Answer: ${q.options[q.answer]}`, margin + 10, y); y += 16;
+        doc.text(`Status: ${status}`, margin + 10, y); y += 16;
+
+        const expl = doc.splitTextToSize(`Explanation: ${q.explanation}`, maxWidth);
+        doc.text(expl, margin + 10, y);
+        y += expl.length * 14 + 20;
+      });
+
+      doc.save(`Quiz_Analysis_${title.replace(/\s+/g, '_')}.pdf`);
+    });
+  </script>
+</body>
+</html>

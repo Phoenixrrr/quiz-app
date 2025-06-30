@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Quiz</title>
   <style>
-    /* ... your existing CSS ... */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       max-width: 900px;
@@ -93,6 +92,8 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF CDN for PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
     const form = document.getElementById('uploadForm');
@@ -115,9 +116,7 @@
         const res = await fetch('/upload-json', { method: 'POST', body: formData });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
-
         questions = normalizeQuestions(data);
-
         if (!questions.length) {
           quizContainer.innerText = 'No questions found.';
           return;
@@ -130,43 +129,18 @@
       }
     });
 
-    // Normalize various JSON formats to flat array of questions
     function normalizeQuestions(data) {
-      // If data is array
       if (Array.isArray(data)) {
-        // Check if nested array (array inside array)
-        if (data.length && Array.isArray(data[0])) {
-          // Flatten one level
-          return data.flat();
-        }
-        return data;
+        return Array.isArray(data[0]) ? data.flat() : data;
       }
-
-      // If data.quiz or data.questions exist and are arrays
-      if (data.quiz && Array.isArray(data.quiz)) {
-        return data.quiz;
-      }
-      if (data.questions && Array.isArray(data.questions)) {
-        return data.questions;
-      }
-
-      // Handle nested quiz inside another object, e.g. data.data.quiz
-      if (data.data && (Array.isArray(data.data.quiz) || Array.isArray(data.data.questions))) {
-        return data.data.quiz || data.data.questions;
-      }
-
-      // Last attempt: if data is object with unknown keys, try to find first array property with question-like structure
+      if (data.quiz && Array.isArray(data.quiz)) return data.quiz;
+      if (data.questions && Array.isArray(data.questions)) return data.questions;
+      if (data.data) return data.data.quiz || data.data.questions || [];
       for (const key in data) {
-        if (Array.isArray(data[key]) && data[key].length > 0) {
-          // Basic heuristic: check if first element has 'question' and 'options'
-          const first = data[key][0];
-          if (first && typeof first === 'object' && 'question' in first && 'options' in first) {
-            return data[key];
-          }
+        if (Array.isArray(data[key]) && 'question' in data[key][0]) {
+          return data[key];
         }
       }
-
-      // If none matched, return empty array
       return [];
     }
 
@@ -212,7 +186,7 @@
       questions.forEach((q, i) => {
         const a = userAnswers[i];
         if (a === null) u++;
-        else if (a === q.answer) c++;
+        else if (String(a) === String(q.answer)) c++;
         else w++;
       });
 
@@ -228,8 +202,7 @@
 
     function showAnalytics(c, w, u) {
       analytics.style.display = 'block';
-      analytics.innerHTML = `
-        <h3>Quiz Completed!</h3>
+      analytics.innerHTML = `<h3>Quiz Completed!</h3>
         <p>Total: ${questions.length}, Correct: ${c}, Wrong: ${w}, Unanswered: ${u}</p>`;
       chartContainer.style.display = 'block';
       renderChart(c, w, u);
@@ -266,22 +239,36 @@
     }
 
     downloadBtn.addEventListener('click', () => {
-      let content = 'Quiz Solutions & Explanations\n\n';
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y = 10;
+      doc.setFontSize(12);
+      doc.text("Quiz Solutions & Explanations", 10, y);
+      y += 10;
+
       questions.forEach((q, i) => {
         const a = userAnswers[i];
         const letter = idx => String.fromCharCode(97 + idx);
-        content += `${i+1}. ${q.question}\nYour answer: ${a !== null ? letter(a) + ') ' + q.options[a] : 'No answer'}\n`;
-        content += `Correct answer: ${letter(q.answer)}) ${q.options[q.answer]}\n`;
-        if (q.explanation) content += `Explanation: ${q.explanation}\n`;
-        content += '\n';
+        const userAns = a !== null ? `${letter(a)}) ${q.options[a]}` : 'No answer';
+        const correctAns = `${letter(q.answer)}) ${q.options[q.answer]}`;
+        const explanation = q.explanation || '';
+        const lines = [
+          `${i+1}. ${q.question}`,
+          `Your Answer: ${userAns}`,
+          `Correct Answer: ${correctAns}`,
+          explanation ? `Explanation: ${explanation}` : ''
+        ];
+
+        lines.forEach(line => {
+          if (y > 280) { doc.addPage(); y = 10; }
+          doc.text(line, 10, y);
+          y += 8;
+        });
+
+        y += 5;
       });
 
-      const blob = new Blob([content], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'quiz_solutions.txt';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      doc.save('quiz_analysis.pdf');
     });
   </script>
 </body>

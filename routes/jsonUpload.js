@@ -1,90 +1,83 @@
-// routes/jsonUpload.js
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 
-const upload = multer({ storage: multer.memoryStorage() }); // store file in memory
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Helper to normalize options
+// Parse options whether they're an array or object (A/B/C/D)
 function parseOptions(opts) {
-  if (Array.isArray(opts)) {
-    return opts;
-  } else if (typeof opts === 'object' && opts !== null) {
-    const keys = ['A', 'B', 'C', 'D'];
-    const optsKeys = Object.keys(opts);
-    const hasABCD = keys.some(k => optsKeys.includes(k));
-    if (hasABCD) {
-      return keys.map(k => {
-        if (!(k in opts)) throw new Error(`Missing option ${k}`);
-        return opts[k];
-      });
+  if (Array.isArray(opts)) return opts;
+  if (typeof opts === 'object') {
+    const abcd = ['A', 'B', 'C', 'D'];
+    const keys = Object.keys(opts);
+    if (abcd.some(k => keys.includes(k))) {
+      return abcd.map(k => opts[k]);
     } else {
-      return optsKeys.map(k => opts[k]);
+      return keys.map(k => opts[k]);
     }
-  } else {
-    throw new Error('Options must be an array or object');
   }
+  throw new Error('Invalid options format.');
 }
 
-// Helper to normalize answer(s)
-function parseAnswers(ans, optionsLength) {
-  const toIndex = (a) => {
-    if (typeof a === 'number') {
-      if (a < 0 || a >= optionsLength) throw new Error('Answer index out of range');
-      return a;
-    }
-    if (typeof a === 'string') {
-      const upper = a.toUpperCase();
-      const idx = ['A', 'B', 'C', 'D'].indexOf(upper);
-      if (idx !== -1 && idx < optionsLength) return idx;
+// Keep "answer" as-is if it's "na", otherwise parse index
+function parseAnswer(ans, optionsLength) {
+  if (typeof ans === 'string' && ans.toLowerCase() === 'na') return 'na';
 
-      const parsed = parseInt(a, 10);
-      if (!isNaN(parsed) && parsed >= 0 && parsed < optionsLength) return parsed;
+  if (typeof ans === 'number') return ans;
 
-      throw new Error(`Invalid answer value: ${a}`);
-    }
-    throw new Error('Answer must be a letter or index');
-  };
+  if (typeof ans === 'string') {
+    const index = ['a', 'b', 'c', 'd'].indexOf(ans.toLowerCase().trim());
+    if (index >= 0 && index < optionsLength) return index;
 
-  if (Array.isArray(ans)) {
-    return ans.map(toIndex);
-  } else {
-    return [toIndex(ans)];
+    const parsed = parseInt(ans, 10);
+    if (!isNaN(parsed) && parsed >= 0 && parsed < optionsLength) return parsed;
   }
+
+  return 'na'; // default to "na" if we can't parse
 }
 
-// Route: Upload and clean quiz JSON
+// Get question array from common formats
+function sanitizeRawData(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw.questions)) return raw.questions;
+  if (Array.isArray(raw.quiz)) return raw.quiz;
+
+  for (const key in raw) {
+    if (Array.isArray(raw[key])) return raw[key];
+  }
+
+  throw new Error('No valid array of questions found.');
+}
+
 router.post('/upload-json', upload.single('quizJson'), (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
 
   try {
-    const jsonStr = req.file.buffer.toString('utf8');
+    const jsonStr = req.file.buffer.toString('utf8').trim();
     const raw = JSON.parse(jsonStr);
-    const data = Array.isArray(raw) ? raw : raw.quiz;
+    const questions = sanitizeRawData(raw);
 
-    if (!Array.isArray(data)) {
-      return res.status(400).send('JSON must contain an array of questions');
-    }
-
-    const quiz = data.map((q, idx) => {
-      if (!q.question || !q.options || q.answer === undefined || q.answer === null) {
-        throw new Error(`Missing fields in question at index ${idx}`);
+    const quiz = questions.map((q, idx) => {
+      if (!q.question || !q.options || q.answer === undefined) {
+        throw new Error(`Missing required fields in question at index ${idx}`);
       }
 
-      const cleanedQuestion = {
-        question: String(q.question).trim(),
-        options: parseOptions(q.options),
-        answer: parseAnswers(q.answer, parseOptions(q.options).length),
-        explanation: q.explanation ? String(q.explanation).trim() : ''
-      };
+      const options = parseOptions(q.options);
+      const answer = parseAnswer(q.answer, options.length);
+      const explanation = q.explanation || 'na';
 
-      return cleanedQuestion;
+      return {
+        question: q.question,
+        options,
+        answer,
+        explanation
+      };
     });
 
     res.json({ quiz });
   } catch (err) {
-    console.error('JSON parse/format error:', err.message);
-    res.status(400).send('Invalid quiz JSON format: ' + err.message);
+    console.error('Failed to process file:', err.message);
+    res.status(400).send('Error parsing file: ' + err.message);
   }
 });
 

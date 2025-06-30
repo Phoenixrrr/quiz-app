@@ -66,10 +66,46 @@
     }
     #downloadPdfBtn { background-color: #27ae60; }
     #downloadPdfBtn:hover { background-color: #1e8449; }
+    #downloadSavedBtn { background-color: #d35400; }
+    #downloadSavedBtn:hover { background-color: #ba4a00; }
     #chart-container {
       width: 300px;
       margin: 20px auto 30px;
     }
+    .btn-group {
+      margin-top: 10px;
+    }
+    .save-btn, .remove-btn {
+      margin-right: 8px;
+    }
+    .save-btn {
+      background-color: #8e44ad;
+    }
+    .remove-btn {
+      background-color: #c0392b;
+    }
+    .save-btn:hover {
+      background-color: #6c3483;
+    }
+    .remove-btn:hover {
+      background-color: #922b21;
+    }
+	.save-btn:disabled,
+	.remove-btn:disabled {
+	background-color: #bdc3c7 !important;
+	color: white;
+	cursor: not-allowed;
+	opacity: 0.8;
+	}
+	
+	.save-btn:not(:disabled) {
+	background-color: #8e44ad;
+	}
+	
+	.remove-btn:not(:disabled) {
+	background-color: #c0392b;
+	}
+
   </style>
 </head>
 <body>
@@ -83,6 +119,9 @@
   <div id="quizContainer"></div>
   <button id="submitQuizBtn" style="display:none;">Submit Quiz</button>
   <button id="downloadPdfBtn" style="display:none;">Download Analysis as PDF</button>
+  <button id="downloadSavedBtn" style="display:none;">Download Saved Questions</button>
+  <button id="retakeQuizBtn" style="display:none;">Retake Quiz</button>
+
 
   <div id="analytics" style="display:none;"></div>
   <div id="chart-container" style="display:none;">
@@ -90,9 +129,7 @@
   </div>
   <div id="reviewContainer" class="review-section" style="display:none;"></div>
 
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- jsPDF CDN for PDF download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
@@ -100,6 +137,7 @@
     const quizContainer = document.getElementById('quizContainer');
     const submitBtn = document.getElementById('submitQuizBtn');
     const downloadBtn = document.getElementById('downloadPdfBtn');
+    const downloadSavedBtn = document.getElementById('downloadSavedBtn');
     const analytics = document.getElementById('analytics');
     const reviewContainer = document.getElementById('reviewContainer');
     const chartContainer = document.getElementById('chart-container');
@@ -107,6 +145,7 @@
     let questions = [];
     let quizSubmitted = false;
     let userAnswers = [];
+    let savedQuestions = [];
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -116,6 +155,7 @@
         const res = await fetch('/upload-json', { method: 'POST', body: formData });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
+		window.lastUploadedData = data;
         questions = normalizeQuestions(data);
         if (!questions.length) {
           quizContainer.innerText = 'No questions found.';
@@ -128,6 +168,21 @@
         console.error(err);
       }
     });
+	
+	const retakeBtn = document.getElementById('retakeQuizBtn');
+
+	retakeBtn.addEventListener('click', () => {
+	if (window.lastUploadedData) {
+		resetView();
+		questions = normalizeQuestions(window.lastUploadedData);
+		renderQuiz(questions);
+		submitBtn.style.display = 'inline-block';
+	} else {
+		alert("No quiz data available. Please re-upload the quiz JSON.");
+	}
+	});
+
+
 
     function normalizeQuestions(data) {
       if (Array.isArray(data)) {
@@ -151,22 +206,66 @@
       chartContainer.style.display = 'none';
       submitBtn.style.display = 'none';
       downloadBtn.style.display = 'none';
+      downloadSavedBtn.style.display = 'none';
       quizSubmitted = false;
       userAnswers = [];
+      savedQuestions = [];
     }
 
     function renderQuiz(questions) {
       questions.forEach((q, idx) => {
         const div = document.createElement('div');
         div.className = 'question-box';
+        div.id = `question-${idx}`;
+
         const opts = q.options.map((opt, j) => {
           const letter = String.fromCharCode(97 + j);
           return `<label><input type="radio" name="q${idx}" value="${j}"/> ${letter}) ${opt}</label>`;
         }).join('');
-        div.innerHTML = `<p><strong>${idx+1}. ${q.question}</strong></p>${opts}`;
+
+        const saveBtn = `<button class="save-btn" id="save-${idx}" onclick="saveQuestion(${idx})" type="button">Save Question</button>`;
+        const removeBtn = `<button class="remove-btn" id="remove-${idx}" onclick="removeQuestion(${idx})" type="button" disabled>Remove Save</button>`;
+        const btnGroup = `<div class="btn-group">${saveBtn}${removeBtn}</div>`;
+
+        div.innerHTML = `<p><strong>${idx+1}. ${q.question}</strong></p>${opts}${btnGroup}`;
         quizContainer.appendChild(div);
       });
     }
+
+	window.saveQuestion = function(index) {
+	const q = questions[index];
+	const exists = savedQuestions.find(item => item.question === q.question);
+	if (!exists) {
+		savedQuestions.push({
+		question: q.question,
+		options: q.options,
+		answer: q.answer,
+		explanation: q.explanation || ''
+		});
+	
+		const saveBtn = document.getElementById(`save-${index}`);
+		const removeBtn = document.getElementById(`remove-${index}`);
+	
+		saveBtn.disabled = true;
+		removeBtn.disabled = false;
+	
+		
+	}
+	}
+	
+	window.removeQuestion = function(index) {
+	const q = questions[index];
+	savedQuestions = savedQuestions.filter(item => item.question !== q.question);
+	
+	const saveBtn = document.getElementById(`save-${index}`);
+	const removeBtn = document.getElementById(`remove-${index}`);
+	
+	saveBtn.disabled = false;
+	removeBtn.disabled = true;
+	
+	
+	}
+
 
     submitBtn.addEventListener('click', () => {
       if (quizSubmitted) return;
@@ -194,19 +293,32 @@
       showReview(userAnswers);
       hideQuestions();
       downloadBtn.style.display = 'inline-block';
+
+      if (savedQuestions.length > 0) {
+        downloadSavedBtn.style.display = 'inline-block';
+      }
+	  retakeBtn.style.display = 'inline-block';
+
     }
 
     function hideQuestions() {
       document.querySelectorAll('.question-box').forEach(div => div.classList.add('hidden'));
     }
 
-    function showAnalytics(c, w, u) {
-      analytics.style.display = 'block';
-      analytics.innerHTML = `<h3>Quiz Completed!</h3>
-        <p>Total: ${questions.length}, Correct: ${c}, Wrong: ${w}, Unanswered: ${u}</p>`;
-      chartContainer.style.display = 'block';
-      renderChart(c, w, u);
-    }
+	function showAnalytics(c, w, u) {
+	const totalMarks = questions.length * 2;
+	const score = (c * 2 - w * 0.66).toFixed(2); // two decimal places
+	
+	analytics.style.display = 'block';
+	analytics.innerHTML = `<h3>Quiz Completed!</h3>
+		<p>Total Questions: ${questions.length}</p>
+		<p>Correct: ${c}, Wrong: ${w}, Unanswered: ${u}</p>
+		<p><strong>Score:</strong> ${score} / ${totalMarks}</p>`;
+		
+	chartContainer.style.display = 'block';
+	renderChart(c, w, u);
+	}
+
 
     function renderChart(c, w, u) {
       const ctx = document.getElementById('result-chart').getContext('2d');
@@ -242,9 +354,14 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       let y = 10;
-      doc.setFontSize(12);
-      doc.text("Quiz Solutions & Explanations", 10, y);
+      const pageHeight = 290;
+      const leftMargin = 10;
+      const maxLineWidth = 190;
+
+      doc.setFontSize(14);
+      doc.text("Quiz Solutions & Explanations", leftMargin, y);
       y += 10;
+      doc.setFontSize(12);
 
       questions.forEach((q, i) => {
         const a = userAnswers[i];
@@ -252,23 +369,37 @@
         const userAns = a !== null ? `${letter(a)}) ${q.options[a]}` : 'No answer';
         const correctAns = `${letter(q.answer)}) ${q.options[q.answer]}`;
         const explanation = q.explanation || '';
-        const lines = [
-          `${i+1}. ${q.question}`,
-          `Your Answer: ${userAns}`,
-          `Correct Answer: ${correctAns}`,
-          explanation ? `Explanation: ${explanation}` : ''
-        ];
 
-        lines.forEach(line => {
-          if (y > 280) { doc.addPage(); y = 10; }
-          doc.text(line, 10, y);
-          y += 8;
+        const questionLines = doc.splitTextToSize(`${i+1}. ${q.question}`, maxLineWidth);
+        const userAnswerLines = doc.splitTextToSize(`Your Answer: ${userAns}`, maxLineWidth);
+        const correctAnswerLines = doc.splitTextToSize(`Correct Answer: ${correctAns}`, maxLineWidth);
+        const explanationLines = explanation ? doc.splitTextToSize(`Explanation: ${explanation}`, maxLineWidth) : [];
+
+        [...questionLines, ...userAnswerLines, ...correctAnswerLines, ...explanationLines].forEach(line => {
+          if (y > pageHeight) { doc.addPage(); y = 10; }
+          doc.text(line, leftMargin, y);
+          y += 7;
         });
-
         y += 5;
       });
 
       doc.save('quiz_analysis.pdf');
+    });
+
+    downloadSavedBtn.addEventListener('click', () => {
+      if (!savedQuestions.length) {
+        alert("No questions saved.");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(savedQuestions, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'saved_questions.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   </script>
 </body>

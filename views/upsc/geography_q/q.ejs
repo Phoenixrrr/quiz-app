@@ -75,6 +75,37 @@
       background-color: #1f618d;
     }
 
+    .save-btn, .remove-btn {
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      margin: 5px 5px 10px 0;
+      display: inline-block;
+    }
+
+    .save-btn {
+      background-color: #8e44ad;
+    }
+
+    .remove-btn {
+      background-color: #c0392b;
+    }
+
+    .save-btn:hover {
+      background-color: #6c3483;
+    }
+
+    .remove-btn:hover {
+      background-color: #922b21;
+    }
+
+    .save-btn:disabled,
+    .remove-btn:disabled {
+      background-color: #bdc3c7 !important;
+      color: white;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
     .result {
       background: white;
       padding: 25px;
@@ -114,6 +145,15 @@
       background-color: #1e8449;
     }
 
+    #retake-btn {
+      margin: 15px auto;
+      background-color: #d35400;
+    }
+
+    #retake-btn:hover {
+      background-color: #ba4a00;
+    }
+
     #chart-container {
       width: 300px;
       margin: 20px auto 30px;
@@ -125,7 +165,7 @@
 
   <form id="quiz-form">
     <% quiz.forEach((q, index) => { %>
-      <div class="question-block">
+      <div class="question-block" id="question-<%= index %>">
         <p><%= index + 1 %>. <%= q.question %></p>
         <% Object.entries(q.options).forEach(([key, val]) => { %>
           <label>
@@ -133,6 +173,8 @@
             <%= val %>
           </label>
         <% }) %>
+        <button type="button" class="save-btn" id="save-<%= index %>" onclick="saveQuestion(<%= index %>)">Save</button>
+        <button type="button" class="remove-btn" id="remove-<%= index %>" onclick="removeQuestion(<%= index %>)" disabled>Remove Save</button>
       </div>
     <% }) %>
     <button type="submit">Submit Quiz</button>
@@ -145,10 +187,11 @@
   <div class="result" id="result" style="display:none;"></div>
 
   <button id="download-btn" style="display:none;">Download Analysis as PDF</button>
+  <button id="retake-btn" style="display:none;" onclick="location.reload()">Retake Quiz</button>
+  <button id="download-saved-btn" style="display:none;">Download Saved Questions</button>
 
-  <!-- jsPDF for PDF -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- Chart.js for pie chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
@@ -157,9 +200,29 @@
     const resultDiv = document.getElementById('result');
     const downloadBtn = document.getElementById('download-btn');
     const chartContainer = document.getElementById('chart-container');
+    const retakeBtn = document.getElementById('retake-btn');
     const quiz = <%- JSON.stringify(quiz) %>;
 
     let userAnswers = [];
+    let savedQuestions = [];
+
+	function saveQuestion(index) {
+	const question = quiz[index];
+	if (!savedQuestions.find(q => q.question === question.question)) {
+		savedQuestions.push(question);
+		document.getElementById(`save-${index}`).disabled = true;
+		document.getElementById(`remove-${index}`).disabled = false;
+		downloadSavedBtn.style.display = 'inline-block';
+	}
+	}
+
+
+    function removeQuestion(index) {
+      const question = quiz[index];
+      savedQuestions = savedQuestions.filter(q => q.question !== question.question);
+      document.getElementById(`save-${index}`).disabled = false;
+      document.getElementById(`remove-${index}`).disabled = true;
+    }
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -207,6 +270,7 @@
       resultDiv.style.display = 'block';
       downloadBtn.style.display = 'inline-block';
       chartContainer.style.display = 'block';
+      retakeBtn.style.display = 'inline-block';
 
       renderChart(correct, wrong, unanswered);
     });
@@ -215,7 +279,6 @@
 
     function renderChart(correct, wrong, unanswered) {
       const ctx = document.getElementById('result-chart').getContext('2d');
-
       if (chartInstance) chartInstance.destroy();
 
       chartInstance = new Chart(ctx, {
@@ -256,7 +319,6 @@
         const uaText = ua ? q.options[ua] : 'Unanswered';
         const status = !ua ? 'Unanswered (0 marks)' : (ua === q.answer ? 'Correct (+2 marks)' : 'Wrong (-0.66 marks)');
 
-        doc.setFontSize(12);
         const questionLines = doc.splitTextToSize(`Q${idx + 1}: ${q.question}`, maxWidth);
         doc.text(questionLines, margin, y);
         y += questionLines.length * 14 + 4;
@@ -272,6 +334,27 @@
 
       doc.save(`Quiz_Analysis_${title.replace(/\s+/g, '_')}.pdf`);
     });
+	
+	const downloadSavedBtn = document.getElementById('download-saved-btn');
+
+	downloadSavedBtn.addEventListener('click', () => {
+	if (savedQuestions.length === 0) {
+		alert("No saved questions to download.");
+		return;
+	}
+	
+	const jsonContent = JSON.stringify(savedQuestions, null, 2);
+	const blob = new Blob([jsonContent], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `Saved_Questions_${title.replace(/\s+/g, '_')}.json`;
+	a.click();
+	
+	URL.revokeObjectURL(url);
+	});
+
   </script>
 </body>
 </html>
